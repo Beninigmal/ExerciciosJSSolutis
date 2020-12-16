@@ -5,9 +5,9 @@ const bodyParser = require("body-parser");
 const ObjectId = require("mongodb").ObjectID;
 
 const MongoClient = require("mongodb").MongoClient;
-const uri =
-  "mongodb+srv://usuario1:18102010@cluster0.h5vg0.mongodb.net/cursoMongoDB?retryWrites=true&w=majority";
-MongoClient.connect(uri, (err, client) => {
+const { ObjectID } = require("mongodb");
+const uri = "mongodb+srv://usuario1:18102010@cluster0.h5vg0.mongodb.net/cursoMongoDB?retryWrites=true&w=majority";
+  MongoClient.connect(uri, { useUnifiedTopology: true, useNewUrlParser: true }, (err, client) =>  {
   if (err) console.log(err);
   db = client.db("cursoMongoDB");
 });
@@ -43,32 +43,39 @@ app.post("/show", (req, res) => {
     if (err) return console.log(err);
 
     console.log("Salvo no Banco de dados");
-    res.redirect("/shows");
-  });
-
-  app.route("/edit/:id").get((req, res) => {
-    let id = req.params.id;
-
-    db.collection("data")
-      .find(ObjectId(id))
-      .toArray((err, result) => {
-        if (err) console.log(err);
-        res.render("/edit.ejs", { data: result })
-      })
-  }).post((req,res) => {
-      let id = req.params.id
-      let name = req.params.name
-      let surname = req.params.surname
-
-      db.collection('data').updateOne({_id: ObjectId(id)},{
-          $set: {
-              name: name,
-              surname: surname
-          }
-      }, (err, res) => {
-          if(err) res.send(err)
-          res.redirect('/shows')
-          console.log('Atualizado no banco de dados')
-      })
+    res.redirect("/shows.ejs");
   })
+
+  app
+    .route('/edit.ejs/:id')
+    .get((req, res) => {
+      var id = req.params.id
+     
+      db.collection('data')
+        .find(ObjectId(id))
+        .toArray((err, result) => {
+          if (err) return console.log(err)
+          res.render('edit.ejs', { data: result })
+        })
+    })
+    .post((req, res) => {
+      let id = req.params.id;
+      let name = req.body.name;
+      let surname = req.body.surname;
+
+      db.collection("data").updateOne(
+        { _id: ObjectID(id) },
+        {
+          $set: {
+            name: name,
+            surname: surname
+          },
+        },
+        (err, result) => {
+          if (err) return console.log(err)
+          res.redirect("/shows.ejs")
+          console.log("Atualizado no banco de dados");
+        }
+      );
+    });
 });
